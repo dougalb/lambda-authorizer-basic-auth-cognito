@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    lambda-authorizer-basic-auth-cognito
+
+    SAM Template for lambda-authorizer-basic-auth-cognito
+    
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+    Function:
+        Timeout: 3
+
+Parameters:
+  CognitoUserPoolId:
+    Description: Previously created Cognito User Pool Id
+    Type: String
+  CognitoClientId:
+    Description: Previously created Cognito Client Id
+    Type: String
+
+
+Resources:
+
+    LambdaAuthorizerBasicAuthCognitoFunction:
+        Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+        Properties:
+            CodeUri: lambda_authorizer_basic_auth_cognito/build/
+            Handler: app.lambda_handler
+            Runtime: python2.7
+            Tracing: Active
+            Policies:
+              - Version: '2012-10-17' # Policy Document
+                Statement:
+                  - Effect: Allow
+                    Action:
+                      - cognito-idp:AdminInitiateAuth
+                    Resource: !Join
+                      - ''
+                      - - 'arn:'
+                        - !Ref 'AWS::Partition'
+                        - ':cognito-idp:'
+                        - !Ref 'AWS::Region'
+                        - ':'
+                        - !Ref 'AWS::AccountId'
+                        - ':userpool/'
+                        - !Ref 'CognitoUserPoolId'
+                        
+            Environment:
+                Variables:
+                    USER_POOL_ID: !Ref CognitoUserPoolId
+                    CLIENT_ID: !Ref CognitoClientId
+                    LOG_LEVEL: INFO
+
+Outputs:
+
+    LambdaAuthorizerBasicAuthCognitoFunction:
+      Description: "Lambda Authorizer Basic Auth Function ARN"
+      Value: !GetAtt LambdaAuthorizerBasicAuthCognitoFunction.Arn
